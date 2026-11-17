@@ -4,15 +4,13 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, ArrowUpRight, ArrowRight, Sparkles, LogOut, User as UserIcon } from "lucide-react"
+import { Menu, X, ArrowUpRight, ArrowRight, Sparkles } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { useAuth } from "./auth-provider"
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const isScrolled = true
   const pathname = usePathname()
-  const { user, loading, signOut } = useAuth()
   const isHomePage = pathname === "/"
 
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
@@ -58,10 +56,6 @@ export function Header() {
     { label: "FAQ", id: "faq" },
   ]
 
-  const userInitials = user?.user_metadata?.full_name
-    ? user.user_metadata.full_name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : user?.email?.[0]?.toUpperCase() || "U"
-
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "px-3 sm:px-4 pt-3 sm:pt-4" : ""}`}>
       <div
@@ -96,77 +90,28 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-2">
-            {!loading && (
-              <>
-                {user ? (
-                  <>
-                    <Link
-                      href="/dashboard"
-                      className={`text-sm px-4 py-2 rounded-full transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-100" : "text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      Dashboard
+  <div className="hidden lg:flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className={`text-sm px-4 py-2 rounded-full transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-100" : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/scan"
+              className={`relative flex items-center gap-0 border rounded-full pl-5 pr-1 py-1 transition-all duration-300 group overflow-hidden ${isScrolled ? "border-zinc-300" : "border-border"
+                }`}
+            >
+              <span className={`absolute inset-0 rounded-full scale-x-0 origin-right group-hover:scale-x-100 transition-transform duration-300 ${isScrolled ? "bg-black" : "bg-foreground"}`} />
+              <span className={`text-sm pr-3 relative z-10 transition-colors duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`}>
+                Scan a Label
+              </span>
+              <span className="w-8 h-8 rounded-full flex items-center justify-center relative z-10">
+                <ArrowRight className={`w-4 h-4 group-hover:opacity-0 absolute transition-opacity duration-300 ${isScrolled ? "text-black" : "text-foreground"}`} />
+                <ArrowUpRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`} />
+              </span>
                     </Link>
-                    <Link
-                      href="/scan"
-                      className={`relative flex items-center gap-0 border rounded-full pl-5 pr-1 py-1 transition-all duration-300 group overflow-hidden ${isScrolled ? "border-zinc-300" : "border-border"
-                        }`}
-                    >
-                      <span className={`absolute inset-0 rounded-full scale-x-0 origin-right group-hover:scale-x-100 transition-transform duration-300 ${isScrolled ? "bg-black" : "bg-foreground"}`} />
-                      <span className={`text-sm pr-3 relative z-10 transition-colors duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`}>
-                        Scan a Label
-                      </span>
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center relative z-10">
-                        <ArrowRight className={`w-4 h-4 group-hover:opacity-0 absolute transition-opacity duration-300 ${isScrolled ? "text-black" : "text-foreground"}`} />
-                        <ArrowUpRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`} />
-                      </span>
-                    </Link>
-                    {/* User avatar + logout */}
-                    <div className="flex items-center gap-1 ml-1">
-                      <div className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center">
-                        {user.user_metadata?.avatar_url ? (
-                          <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                          <span className="text-xs font-semibold text-white">{userInitials}</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={signOut}
-                        className="text-zinc-400 hover:text-zinc-700 p-2 rounded-lg transition-colors"
-                        title="Sign out"
-                      >
-                        <LogOut className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      href="/login"
-                      className={`text-sm px-4 py-2 rounded-full transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-100" : "text-muted-foreground hover:text-foreground"
-                        }`}
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      href="/signup"
-                      className={`relative flex items-center gap-0 border rounded-full pl-5 pr-1 py-1 transition-all duration-300 group overflow-hidden ${isScrolled ? "border-zinc-300" : "border-border"
-                        }`}
-                    >
-                      <span className={`absolute inset-0 rounded-full scale-x-0 origin-right group-hover:scale-x-100 transition-transform duration-300 ${isScrolled ? "bg-black" : "bg-foreground"}`} />
-                      <span className={`text-sm pr-3 relative z-10 transition-colors duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`}>
-                        Get Started
-                      </span>
-                      <span className="w-8 h-8 rounded-full flex items-center justify-center relative z-10">
-                        <ArrowRight className={`w-4 h-4 group-hover:opacity-0 absolute transition-opacity duration-300 ${isScrolled ? "text-black" : "text-foreground"}`} />
-                        <ArrowUpRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 ${isScrolled ? "text-black group-hover:text-white" : "text-foreground group-hover:text-background"}`} />
-                      </span>
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
           </div>
 
           <button
@@ -200,55 +145,20 @@ export function Header() {
                   </a>
                 ))}
 
-                {!loading && (
-                  <div className={`mt-2 pt-3 border-t ${isScrolled ? "border-zinc-200" : "border-border"}`}>
-                    {user ? (
-                      <>
-                        <Link
-                          href="/dashboard"
-                          className={`min-h-[44px] flex items-center px-3 rounded-xl transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-50" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                          Dashboard
-                        </Link>
-                        <Link
-                          href="/scan"
-                          className={`min-h-[44px] flex items-center px-3 rounded-xl transition-colors mt-1 ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-50" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                          Scan a Label
-                        </Link>
-                        <button
-                          onClick={signOut}
-                          className="min-h-[44px] flex items-center gap-2 px-3 rounded-xl transition-colors mt-1 text-red-500 hover:text-red-700 hover:bg-red-50 w-full text-left"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Sign Out
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          href="/login"
-                          className={`min-h-[44px] flex items-center px-3 rounded-xl transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-50" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                          Login
-                        </Link>
-                        <Link
-                          href="/signup"
-                          className="mt-2 relative flex items-center gap-0 border rounded-full pl-5 pr-1 py-1.5 w-fit transition-all duration-300 group overflow-hidden border-zinc-300"
-                        >
-                          <span className="absolute inset-0 rounded-full scale-x-0 origin-right group-hover:scale-x-100 transition-transform duration-300 bg-black" />
-                          <span className="text-sm pr-3 relative z-10 transition-colors duration-300 text-black group-hover:text-white">
-                            Get Started
-                          </span>
-                          <span className="w-8 h-8 rounded-full flex items-center justify-center relative z-10">
-                            <ArrowRight className="w-4 h-4 group-hover:opacity-0 absolute transition-opacity duration-300 text-black" />
-                            <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all duration-300 text-black group-hover:text-white" />
-                          </span>
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                )}
+                <div className={`mt-2 pt-3 border-t ${isScrolled ? "border-zinc-200" : "border-border"}`}>
+                  <Link
+                    href="/dashboard"
+                    className={`min-h-[44px] flex items-center px-3 rounded-xl transition-colors ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-50" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/scan"
+                    className={`min-h-[44px] flex items-center px-3 rounded-xl transition-colors mt-1 ${isScrolled ? "text-zinc-600 hover:text-black hover:bg-zinc-50" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Scan a Label
+                  </Link>
+                </div>
               </div>
             </motion.nav>
           )}

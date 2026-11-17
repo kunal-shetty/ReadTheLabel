@@ -4,22 +4,18 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Sparkles, Search, Camera, Clock, BookOpen, User,
+  Sparkles, Search, Camera, Clock, BookOpen,
   TrendingUp, ShieldCheck, AlertTriangle, XCircle,
   Package, ChevronRight, ArrowUpRight, Scan, Trash2,
-  LogIn, RefreshCw, LogOut, ChevronDown, CheckCircle2, X
+  ChevronDown, CheckCircle2, X
 } from "lucide-react"
 import {
   PieChart, Pie, Cell, ResponsiveContainer
 } from "recharts"
-import { useAuth } from "@/components/auth-provider"
-import { createClient } from "@/lib/supabase/client"
 import {
   type ScanHistoryItem,
-  getLocalScanHistory, setLocalScanHistory, removeLocalScan,
-  clearLocalScanHistory, fetchUserScans, deleteScanFromSupabase,
-  deleteAllUserScans
-} from "@/lib/supabase/scans"
+  getLocalScanHistory, removeLocalScan, clearLocalScanHistory
+} from "@/lib/scans"
 
 /* ─── Helpers ─── */
 function getScoreColor(score: number) {
@@ -82,54 +78,15 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([])
   const [mounted, setMounted] = useState(false)
-  const [syncing, setSyncing] = useState(false)
   const [selectedScan, setSelectedScan] = useState<ScanHistoryItem | null>(null)
   const [expandedIngredient, setExpandedIngredient] = useState<number | null>(null)
 
-  const { user, loading: authLoading, signOut } = useAuth()
-  const supabase = createClient()
-
-  // Fetch from Supabase into localStorage, then render from localStorage
-  const syncFromSupabase = useCallback(async () => {
-    if (!user) return
-
-    setSyncing(true)
-    try {
-      const { items, error } = await fetchUserScans(supabase, user.id)
-
-      if (error) {
-        setSyncing(false)
-        return
-      }
-
-      setLocalScanHistory(items)
-      setScanHistory(items)
-      localStorage.setItem("scanHistory_synced", Date.now().toString())
-    } catch (err) {
-      console.error("Sync error:", err)
-    }
-    setSyncing(false)
-  }, [user, supabase])
-
-  // On mount: load from localStorage first for instant render, then sync
+  // On mount: load scan history from localStorage
   useEffect(() => {
     setMounted(true)
     setScanHistory(getLocalScanHistory())
   }, [])
 
-  // When auth resolves and user is logged in, sync from Supabase
-  useEffect(() => {
-    if (authLoading || !user) return
-
-    // Check if we already synced recently (within 30s)
-    const lastSync = localStorage.getItem("scanHistory_synced")
-    const now = Date.now()
-    if (lastSync && now - parseInt(lastSync) < 30000) {
-      return
-    }
-
-    syncFromSupabase()
-  }, [authLoading, user, syncFromSupabase])
 
   const filteredHistory = useMemo(() =>
     scanHistory.filter(item =>
@@ -185,25 +142,13 @@ export default function DashboardPage() {
       })
   }, [scanHistory])
 
-  const handleDeleteScan = useCallback(async (scanId: string) => {
-    // Remove from local state + localStorage
-    const updated = removeLocalScan(scanId)
-    setScanHistory(updated)
+  const handleDeleteScan = useCallback((scanId: string) => {
+    setScanHistory(removeLocalScan(scanId))
+  }, [])
 
-    // Remove from Supabase if logged in
-    if (user) {
-      await deleteScanFromSupabase(supabase, scanId)
-    }
-  }, [user, supabase])
-
-  const handleClearHistory = async () => {
+  const handleClearHistory = () => {
     clearLocalScanHistory()
     setScanHistory([])
-
-    // Also delete from Supabase if logged in
-    if (user) {
-      await deleteAllUserScans(supabase, user.id)
-    }
   }
 
   if (!mounted) return null
@@ -229,21 +174,6 @@ export default function DashboardPage() {
                 className="w-48 md:w-64 pl-9 pr-4 py-2 text-sm bg-zinc-100 rounded-xl border-0 outline-none focus:ring-2 focus:ring-zinc-900/10 transition-all placeholder:text-zinc-400"
               />
             </div>
-            {user ? (
-              <div className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center overflow-hidden">
-                {user.user_metadata?.avatar_url ? (
-                  <img src={user.user_metadata.avatar_url} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xs font-semibold text-white">
-                    {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U"}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <Link href="/login" className="w-9 h-9 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-500 hover:bg-zinc-200 transition-colors">
-                <User className="w-4 h-4" />
-              </Link>
-            )}
           </div>
         </div>
 
@@ -268,7 +198,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-semibold text-zinc-900">Dashboard</h1>
             <p className="text-sm text-zinc-500 mt-0.5">
-              {user ? `Welcome back, ${user.user_metadata?.full_name?.split(" ")[0] || "User"}` : "Your product safety overview"}
+              Your product safety overview
             </p>
           </div>
           <div className="flex gap-2">
@@ -279,41 +209,9 @@ export default function DashboardPage() {
               <Camera className="w-4 h-4" />
               New Scan
             </Link>
-            {user && (
-              <button
-                onClick={syncFromSupabase}
-                disabled={syncing}
-                className="inline-flex items-center gap-2 bg-white text-zinc-700 text-sm font-medium px-4 py-2.5 rounded-xl border border-zinc-200 hover:bg-zinc-50 transition-colors min-h-[44px] disabled:opacity-50"
-                title="Sync from cloud"
-              >
-                <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-              </button>
-            )}
           </div>
         </div>
 
-        {/* ─── Login Banner for unauthenticated users ─── */}
-        {!authLoading && !user && scanHistory.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6 flex items-center gap-3"
-          >
-            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <LogIn className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-zinc-900">Sign in to sync your scans</p>
-              <p className="text-xs text-zinc-500 mt-0.5">Your scans are stored locally. Sign in to back them up to the cloud.</p>
-            </div>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors flex-shrink-0"
-            >
-              Sign in
-            </Link>
-          </motion.div>
-        )}
 
         {/* ─── Empty State ─── */}
         {scanHistory.length === 0 ? (
@@ -711,15 +609,6 @@ export default function DashboardPage() {
               </Link>
             )
           })}
-          {user && (
-            <button
-              onClick={signOut}
-              className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-colors min-h-[44px] min-w-[44px] justify-center text-zinc-400 hover:text-red-500"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Logout</span>
-            </button>
-          )}
         </div>
       </nav>
     </div>

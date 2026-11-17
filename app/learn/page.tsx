@@ -3,12 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useAuth } from "@/components/auth-provider"
 import {
     Sparkles, BookOpen, Scan, Clock, AlertTriangle, ShieldCheck,
     XCircle, ChevronDown, Beaker, FileText, Apple, Ban,
     Heart, Baby, Leaf, Flame, Search, Tag, Calendar,
-    CandyOff, Scale, LogOut, type LucideIcon
+    CandyOff, Scale, type LucideIcon
 } from "lucide-react"
 
 /* ─── Data ─── */
@@ -169,7 +168,6 @@ const riskConfig = {
 /* ─── Learn Page ─── */
 export default function LearnPage() {
     const [expandedIngredient, setExpandedIngredient] = useState<number | null>(null)
-    const { user, signOut } = useAuth()
 
     return (
         <div className="min-h-screen bg-zinc-50 pb-24 md:pb-8">
@@ -386,15 +384,6 @@ export default function LearnPage() {
                             </Link>
                         )
                     })}
-                    {user && (
-                        <button
-                            onClick={signOut}
-                            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-colors min-h-[44px] min-w-[44px] justify-center text-zinc-400 hover:text-red-500"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="text-[10px] font-medium">Logout</span>
-                        </button>
-                    )}
                 </div>
             </nav>
         </div>

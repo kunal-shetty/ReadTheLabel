@@ -7,14 +7,12 @@ import {
     Camera, Upload, ArrowLeft, X, ChevronDown,
     ShieldCheck, AlertTriangle, XCircle, Scan, Image as ImageIcon,
     Sparkles, CheckCircle2, ExternalLink, Clock, BookOpen,
-    Ban, LogOut
+    Ban
 } from "lucide-react"
-import { useAuth } from "@/components/auth-provider"
-import { createClient } from "@/lib/supabase/client"
 import {
     type AnalysisResult, type Ingredient, type RiskLevel,
-    saveLocalScan, saveScanToSupabase
-} from "@/lib/supabase/scans"
+    saveLocalScan
+} from "@/lib/scans"
 
 /* ─── Types ─── */
 type ScanState = "idle" | "scanning" | "result" | "not_food" | "error"
@@ -49,8 +47,6 @@ export default function ScanPage() {
 
     const fileInputRef = useRef<HTMLInputElement>(null)
     const cameraInputRef = useRef<HTMLInputElement>(null)
-    const { user, signOut } = useAuth()
-    const supabase = createClient()
 
     const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -109,11 +105,6 @@ export default function ScanPage() {
                 setAnalysisResult(result)
                 saveLocalScan(result)
 
-                // Sync to Supabase if logged in
-                if (user) {
-                    saveScanToSupabase(supabase, user.id, result)
-                }
-
                 setScanState("result")
             } else {
                 setErrorMessage("Unexpected response from the server.")
@@ -127,7 +118,7 @@ export default function ScanPage() {
 
         // Reset file input so the same file can be selected again
         e.target.value = ""
-    }, [user, supabase])
+    }, [])
 
     // Scanning progress animation — runs while API call is in progress
     useEffect(() => {
@@ -623,15 +614,6 @@ export default function ScanPage() {
                             </Link>
                         )
                     })}
-                    {user && (
-                        <button
-                            onClick={signOut}
-                            className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-colors min-h-[44px] min-w-[44px] justify-center text-zinc-400 hover:text-red-500"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="text-[10px] font-medium">Logout</span>
-                        </button>
-                    )}
                 </div>
             </nav>
         </div>
